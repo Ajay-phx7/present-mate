@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PresentMate Session</title>
+    <style>
+        body { width: 320px; padding: 15px; font-family: sans-serif; }
+        .btn { padding: 8px 12px; background: #0070f3; color: white; border: none; cursor: pointer; border-radius: 4px; width: 100%; margin-top: 10px; }
+        .input { width: 100%; padding: 8px; box-sizing: border-box; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; }
+        #status { margin-top: 15px; font-size: 14px; text-align: center; font-weight: bold; color: #555; }
+    </style>
+</head>
+<body>
+    <h3 style="margin-top: 0; color: #0070f3;">PresentMate</h3>
+    <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Enter active session ID to attach overlay to the current presentation.</p>
+    
+    <label style="font-size: 14px; font-weight: bold;">Session ID:</label>
+    <input type="text" id="sessionId" class="input" placeholder="e.g. 64b8f..."/>
+    
+    <button class="btn" id="connectBtn">Connect Session</button>
+    <div id="status">Status: Waiting</div>
+    
+    <script src="dist/popup.js"></script>
+</body>
+</html>
