@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+motor
+pydantic
+google-genai
+pdfminer.six
+python-pptx
+python-multipart

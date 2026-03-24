@@ -77,6 +77,7 @@ async def get_current_slide_hints(id: str, db = Depends(get_db)):
         
     return {
         "slide_number": current_slide_num,
+        "total_slides": presentation.get("total_slides", 1),
         "summary": slide_details.get("summary"),
         "key_points": slide_details.get("key_points")
     }

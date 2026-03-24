@@ -1,13 +1,18 @@
 import os
 import json
-from openai import AsyncOpenAI
+from google import genai
+from google.genai import types
 from schemas.presentation import SlideSummary
 
-client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+def _get_client():
+    api_key = os.getenv("GEMINI_API_KEY")
+    return genai.Client(api_key=api_key)
+
+MODEL = "gemini-2.5-flash"
 
 async def generate_slide_summary(slide_number: int, text: str) -> SlideSummary:
     """
-    Calls OpenAI to generate summary, key points, and likely questions for a given slide text.
+    Calls Gemini to generate summary, key points, and likely questions for a given slide text.
     """
     prompt = f"""
     You are an AI assistant helping a presenter. Given the text from a presentation slide, extract the following:
@@ -26,16 +31,16 @@ async def generate_slide_summary(slide_number: int, text: str) -> SlideSummary:
     """
     
     try:
-        response = await client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant that outputs only valid JSON."},
-                {"role": "user", "content": prompt}
-            ],
-            response_format={ "type": "json_object" }
+        client = _get_client()
+        response = await client.aio.models.generate_content(
+            model=MODEL,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+            )
         )
         
-        result_content = response.choices[0].message.content
+        result_content = response.text
         data = json.loads(result_content)
         
         return SlideSummary(
@@ -46,7 +51,7 @@ async def generate_slide_summary(slide_number: int, text: str) -> SlideSummary:
             likely_questions=data.get("likely_questions", [])
         )
     except Exception as e:
-        print(f"Error calling OpenAI API: {e}")
+        print(f"Error calling Gemini API: {e}")
         return SlideSummary(
             slide_number=slide_number,
             raw_text=text,
@@ -80,16 +85,16 @@ async def generate_qa_hint(question: str, slide_context: dict) -> dict:
     """
     
     try:
-        response = await client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant that outputs only valid JSON."},
-                {"role": "user", "content": prompt}
-            ],
-            response_format={ "type": "json_object" }
+        client = _get_client()
+        response = await client.aio.models.generate_content(
+            model=MODEL,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+            )
         )
         
-        result_content = response.choices[0].message.content
+        result_content = response.text
         data = json.loads(result_content)
         
         return {
@@ -97,7 +102,7 @@ async def generate_qa_hint(question: str, slide_context: dict) -> dict:
             "talking_points": data.get("talking_points", [])
         }
     except Exception as e:
-        print(f"Error calling OpenAI API for QA: {e}")
+        print(f"Error calling Gemini API for QA: {e}")
         return {
             "answer_hint": "Could not generate hint for this question.",
             "talking_points": []
