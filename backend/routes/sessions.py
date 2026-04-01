@@ -122,3 +122,24 @@ async def process_live_question(id: str, request: QuestionRequest, db = Depends(
         "question": request.questionText,
         "hint": hint
     }
+
+# ─── Add-in: latest response polling ─────────────────────────────────────────
+
+@router.get("/{id}/latest-response")
+async def get_latest_response(id: str, db = Depends(get_db)):
+    """
+    Called by the PowerPoint Add-in (polling every 2s) to retrieve the most
+    recent audience question and AI-generated answer hint captured by the
+    Chrome Extension through the /question endpoint.
+    """
+    session = await db.sessions.find_one({"_id": ObjectId(id)})
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    last_question = session.get("last_question")
+    last_response = session.get("last_response")
+
+    return {
+        "question": last_question,
+        "hint": last_response,  # dict with answer_hint + talking_points, or None
+    }

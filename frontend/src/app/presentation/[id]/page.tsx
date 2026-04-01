@@ -82,6 +82,18 @@ export default function PresentationDetailsPage() {
     }
   };
 
+  const handleStopSession = async () => {
+    try {
+      if (!activeSessionId) return;
+      await api.post(`/sessions/${activeSessionId}/end`);
+      window.postMessage({ type: "STOP_PRESENTMATE_SESSION" }, "*");
+      setActiveSessionId(null);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to stop session.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-cream-50 text-slate-900 font-sans pb-20">
       <header className="bg-white/80 backdrop-blur-md border-b border-teal-100 px-6 py-4 flex items-center justify-between sticky top-0 z-50">
@@ -89,14 +101,23 @@ export default function PresentationDetailsPage() {
           <ArrowLeft className="w-4 h-4 mr-2" /> Back to Dashboard
         </Link>
         <div className="flex gap-4">
-          <Button 
-            disabled={data.processing_status !== "ready" || sessionStarting}
-            onClick={handleStartSession}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white shadow-md hover:shadow-lg transition-all rounded-lg font-semibold border-none disabled:opacity-50"
-          >
-            {sessionStarting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <PlayCircle className="w-4 h-4 mr-2" />}
-            {sessionStarting ? "Starting..." : "Start Slide Session"}
-          </Button>
+          {!activeSessionId ? (
+            <Button 
+              disabled={data.processing_status !== "ready" || sessionStarting}
+              onClick={handleStartSession}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white shadow-md hover:shadow-lg transition-all rounded-lg font-semibold border-none disabled:opacity-50"
+            >
+              {sessionStarting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <PlayCircle className="w-4 h-4 mr-2" />}
+              {sessionStarting ? "Starting..." : "Start Slide Session"}
+            </Button>
+          ) : (
+            <Button 
+              onClick={handleStopSession}
+              className="bg-rose-500 hover:bg-rose-600 text-white shadow-md hover:shadow-lg transition-all rounded-lg font-semibold border-none"
+            >
+              Stop Session
+            </Button>
+          )}
         </div>
       </header>
 

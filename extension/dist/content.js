@@ -25,9 +25,20 @@ const injectStyles = () => {
         .pm-btn-hover { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
         .pm-btn-hover:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.1); }
         .pm-btn-hover:active:not(:disabled) { transform: translateY(0); }
+        .pm-scroll::-webkit-scrollbar { width: 4px; }
+        .pm-scroll::-webkit-scrollbar-track { background: transparent; }
+        .pm-scroll::-webkit-scrollbar-thumb { background: rgba(20, 184, 166, 0.3); border-radius: 4px; }
+        .pm-scroll::-webkit-scrollbar-thumb:hover { background: rgba(20, 184, 166, 0.6); }
     `;
     document.head.appendChild(style);
 };
+document.addEventListener("fullscreenchange", () => {
+    const target = document.fullscreenElement || document.body;
+    if (stealthBadge)
+        target.appendChild(stealthBadge);
+    if (overlayDiv)
+        target.appendChild(overlayDiv);
+});
 chrome.runtime.sendMessage({ type: "GET_SESSION" }, (response) => {
     if (response && response.sessionId) {
         activeSessionId = response.sessionId;
@@ -48,7 +59,7 @@ function createStealthBadge() {
         position: fixed; top: 12px; right: 16px; 
         background: rgba(253, 251, 247, 0.95);
         color: #0d9488; font-family: system-ui, sans-serif; font-size: 11px;
-        padding: 6px 14px; border-radius: 24px; z-index: 999999;
+        padding: 6px 14px; border-radius: 24px; z-index: 2147483647;
         pointer-events: none; border: 1px solid rgba(20, 184, 166, 0.3);
         letter-spacing: 0.3px; font-weight: 700;
         box-shadow: 0 4px 12px rgba(13, 148, 136, 0.15);
@@ -56,7 +67,7 @@ function createStealthBadge() {
         animation: pmSlideUp 0.4s ease-out;
     `;
     stealthBadge.innerHTML = `<span style="display:inline-block; width:6px; height:6px; background:#10b981; border-radius:50%; margin-right:6px; animation:pmPulseGlow 2s infinite;"></span>PresentMate Active`;
-    document.body.appendChild(stealthBadge);
+    (document.fullscreenElement || document.body).appendChild(stealthBadge);
 }
 function removeStealthBadge() {
     stealthBadge?.remove();
@@ -69,14 +80,15 @@ function createOverlay() {
     overlayDiv.id = "presentmate-overlay";
     overlayDiv.style.cssText = `
         position: fixed; bottom: 24px; right: 24px; width: 420px;
+        max-height: calc(100vh - 48px); display: flex; flex-direction: column;
         background: rgba(253, 251, 247, 0.96); color: #0f172a; padding: 24px;
         border-radius: 16px; box-shadow: 0 24px 40px -8px rgba(13, 148, 136, 0.15);
-        font-family: system-ui, sans-serif; z-index: 999999;
+        font-family: system-ui, sans-serif; z-index: 2147483647;
         border: 1px solid rgba(20, 184, 166, 0.25); backdrop-filter: blur(16px);
         animation: pmSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     `;
     overlayDiv.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center;
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-shrink: 0;
                     margin-bottom:16px; border-bottom:1px solid rgba(20, 184, 166, 0.15); padding-bottom:12px;">
             <div style="display:flex; align-items:center; gap:8px;">
                 <div style="background:#0d9488; padding:5px; border-radius:8px; display:flex;">
@@ -92,17 +104,19 @@ function createOverlay() {
             </div>
         </div>
 
-        <div id="pm-content">
-            <p style="font-size:14px; color:#64748b; font-weight:500;">Loading live hints for current slide...</p>
-        </div>
+        <div style="overflow-y: auto; overflow-x: hidden; flex-grow: 1; padding-right: 4px; margin-right: -4px;" class="pm-scroll">
+            <div id="pm-content">
+                <p style="font-size:14px; color:#64748b; font-weight:500;">Loading live hints for current slide...</p>
+            </div>
 
-        <div id="pm-qa-content" style="margin-top:16px; border-top:1px solid rgba(20, 184, 166, 0.15); padding-top:12px;">
-            <div id="pm-mic-status" style="font-size:11px; color:#64748b; font-weight:500; display:flex; align-items:center; gap:6px;">
-                <div style="width:6px; height:6px; background:#cbd5e1; border-radius:50%;"></div> Mic off. Click Listen to capture audience questions.
+            <div id="pm-qa-content" style="margin-top:16px; border-top:1px solid rgba(20, 184, 166, 0.15); padding-top:12px;">
+                <div id="pm-mic-status" style="font-size:11px; color:#64748b; font-weight:500; display:flex; align-items:center; gap:6px;">
+                    <div style="width:6px; height:6px; background:#cbd5e1; border-radius:50%;"></div> Mic off. Click Listen to capture audience questions.
+                </div>
             </div>
         </div>
     `;
-    document.body.appendChild(overlayDiv);
+    (document.fullscreenElement || document.body).appendChild(overlayDiv);
     overlayDiv.querySelector("#close-pm-overlay")?.addEventListener("click", () => {
         overlayDiv?.remove();
         overlayDiv = null;
@@ -294,5 +308,21 @@ chrome.runtime.onMessage.addListener((message) => {
     }
     if (message.type === "SET_STEALTH_MODE") {
         setStealthMode(message.enabled);
+    }
+    if (message.type === "HIDE_OVERLAY") {
+        if (overlayDiv) {
+            overlayDiv.remove();
+            overlayDiv = null;
+        }
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+            pollingInterval = null;
+        }
+        activeSessionId = null;
+    }
+});
+window.addEventListener("message", (event) => {
+    if (event.data && event.data.type === "STOP_PRESENTMATE_SESSION") {
+        chrome.runtime.sendMessage({ type: "STOP_SESSION" });
     }
 });

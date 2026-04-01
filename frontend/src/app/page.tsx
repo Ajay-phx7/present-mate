@@ -34,10 +34,10 @@ export default function LandingPage() {
               Presentation Assistant
             </span>
           </h1>
-          <p className="text-xl text-slate-600 max-w-2xl mx-auto font-medium" style={{animationDelay: '0.2s', animationFillMode: 'both'}} className="animate-fade-in-up">
+          <p className="text-xl text-slate-600 max-w-2xl mx-auto font-medium animate-fade-in-up" style={{animationDelay: '0.2s', animationFillMode: 'both'}}>
             Upload your slides, get AI-generated speaking points, and receive context-aware answers to audience questions—live while you present.
           </p>
-          <div className="flex items-center justify-center gap-4 pt-6" style={{animationDelay: '0.4s', animationFillMode: 'both'}} className="animate-fade-in-up">
+          <div className="flex items-center justify-center gap-4 pt-6 animate-fade-in-up" style={{animationDelay: '0.4s', animationFillMode: 'both'}}>
             <Link href="/login">
               <Button size="lg" className="text-lg px-8 py-6 bg-teal-600 hover:bg-teal-700 hover:-translate-y-1 hover:shadow-xl hover:shadow-teal-600/20 transition-all duration-300 border-none font-semibold rounded-xl">
                 Get Started Free

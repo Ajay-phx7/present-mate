@@ -68,6 +68,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         broadcastToAllTabs({ type: "SET_STEALTH_MODE", enabled: message.enabled });
         sendResponse({ success: true });
     }
+    if (message.type === "STOP_SESSION") {
+        setStoredSession(null);
+        broadcastToAllTabs({ type: "HIDE_OVERLAY" });
+        sendResponse({ success: true });
+    }
     if (message.type === "FETCH_HINTS_FOR_POPUP") {
         getStoredSession().then(async (sessionId) => {
             if (!sessionId) {
